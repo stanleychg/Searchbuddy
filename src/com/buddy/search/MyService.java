@@ -145,6 +145,8 @@ public class MyService extends Service {
 					//Check position of viewOverlay
 					if(viewParams.y < phoneHeight - heightMargin - 150){
 						//Run search
+						String s = getClosestWord(viewParams.x,viewParams.y);
+						searchWord(s);
 					} else{
 						//Destroy service
 						MyService.this.stopSelf();
@@ -156,6 +158,17 @@ public class MyService extends Service {
 				return false;
 			}
 		});
+	}
+	
+	//Get word closest to position of viewOverlay
+	String getClosestWord(int x, int y){
+		String s = null;
+		return s;
+	}
+	
+	//Redirect to bing search for word
+	void searchWord(String aWord){
+		
 	}
 	
 
