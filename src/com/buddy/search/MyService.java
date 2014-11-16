@@ -21,10 +21,19 @@ import android.widget.Toast;
 
 public class MyService extends Service {
 	
+	//UI
 	private WindowManager windowManager; //Window of phone
 	private WindowManager.LayoutParams viewParams; //Layout Parameters for viewOverlay
 	private WindowManager.LayoutParams windowParams;
 	private ImageView viewOverlay;
+	private ImageView lineBorder;
+	private int phoneWidth;
+	private int phoneHeight;
+	
+	//Set margins for white line
+	int lineWidth = 15;
+	int widthMargin = 10; 
+	int heightMargin = 275;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -50,7 +59,44 @@ public class MyService extends Service {
 	@Override
 	public void onCreate(){
 		super.onCreate();
+		
+		//Grab window of phone
 		windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+		
+		//Grab phone dimensions
+		Display display = windowManager.getDefaultDisplay();
+		Point size = new Point();
+		display.getSize(size);
+		phoneWidth = size.x;
+		phoneHeight = size.y;
+		
+		//Prepare line border
+		
+		//Set paint properties
+		Paint paint = new Paint();
+		paint.setColor(Color.argb(200, 255, 255, 255));
+		paint.setStrokeWidth(lineWidth);
+		
+		//Generate line bitmap
+		Bitmap bm = Bitmap.createBitmap(phoneWidth, phoneHeight ,Bitmap.Config.ARGB_4444);
+		bm.eraseColor(Color.argb(0, 255, 255, 255));
+		Canvas canvas = new Canvas(bm);
+		canvas.drawLine(widthMargin, phoneHeight - heightMargin, 
+				phoneWidth - widthMargin, phoneHeight - heightMargin, paint);
+		
+		//Set bitmap of white line
+		lineBorder = new ImageView(MyService.this);
+		lineBorder.setImageBitmap(bm);
+		
+		//Set LayoutParams of white line
+		windowParams = new WindowManager.LayoutParams(
+			WindowManager.LayoutParams.MATCH_PARENT,
+			WindowManager.LayoutParams.MATCH_PARENT,
+			WindowManager.LayoutParams.TYPE_PHONE,
+			WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+				PixelFormat.TRANSLUCENT);
+		
+		//Prepare viewOverlay and Set LayoutParams of white line
 		viewOverlay = new ImageView(this);
 		viewOverlay.setImageResource(R.drawable.ic_launcher);
 		viewParams = new WindowManager.LayoutParams(
@@ -73,8 +119,6 @@ public class MyService extends Service {
 			private float initTouchX;
 			private float initTouchY;
 			
-			private ImageView lineBorder;
-			
 			public boolean onTouch(View v, MotionEvent event){
 				//Check type of movement
 				switch(event.getAction()){
@@ -84,44 +128,6 @@ public class MyService extends Service {
 					initY = viewParams.y;
 					initTouchX = event.getRawX();
 					initTouchY = event.getRawY();
-					
-					/*
-					//Draw boundaries of lower boundaries of viewOverlay
-					*/
-					//Grab phone width
-					Display display = windowManager.getDefaultDisplay();
-					Point size = new Point();
-					display.getSize(size);
-					int phoneWidth = size.x;
-					int phoneHeight = size.y;
-					
-					//Draw bottom border with thin white line with margins
-					int lineWidth = 15;
-					int widthMargin = 10; 
-					int heightMargin = 275;
-					
-					Paint paint = new Paint();
-					paint.setColor(Color.argb(200, 255, 255, 255));
-					paint.setStrokeWidth(lineWidth);
-
-					
-					Bitmap bm = Bitmap.createBitmap(phoneWidth, phoneHeight ,Bitmap.Config.ARGB_4444);
-					bm.eraseColor(Color.argb(0, 255, 255, 255));
-					Canvas canvas = new Canvas(bm);
-					canvas.drawLine(widthMargin, phoneHeight - heightMargin, phoneWidth - widthMargin, phoneHeight - heightMargin, paint);
-					
-					//Set bitmap of imageview
-					lineBorder = new ImageView(MyService.this);
-					lineBorder.setImageBitmap(bm);
-					
-					//Set LayoutParams of imageview
-					windowParams = new WindowManager.LayoutParams(
-						WindowManager.LayoutParams.MATCH_PARENT,
-						WindowManager.LayoutParams.MATCH_PARENT,
-						WindowManager.LayoutParams.TYPE_PHONE,
-						WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-							PixelFormat.TRANSLUCENT);
-					//windowParams.height = 500;
 					
 					//Add line border to window
 					windowManager.addView(lineBorder, windowParams);
@@ -135,6 +141,14 @@ public class MyService extends Service {
 					break;
 				case MotionEvent.ACTION_UP:
 					windowManager.removeView(lineBorder);
+					
+					//Check position of viewOverlay
+					if(viewParams.y < phoneHeight - heightMargin - 150){
+						//Run search
+					} else{
+						//Destroy service
+						MyService.this.stopSelf();
+					}
 					break;
 				default:
 					break;
